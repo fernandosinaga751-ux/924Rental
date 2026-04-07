@@ -117,12 +117,13 @@ function PublicSite({ firebase, setMode }) {
         onClick={() => setMode("admin")}
         title="Panel Admin"
         style={{
-          position: "fixed", bottom: 24, left: 20, zIndex: 998,
-          background: "rgba(10,10,22,0.9)", color: "#444",
-          border: "1px solid rgba(255,255,255,0.08)",
+          position: "fixed", bottom: 80, left: 20, zIndex: 9999,
+          background: "rgba(10,10,22,0.95)", color: "#888",
+          border: "1px solid rgba(255,255,255,0.15)",
           borderRadius: 8, padding: "7px 14px",
           fontSize: 11, cursor: "pointer", fontWeight: 600,
           backdropFilter: "blur(8px)",
+          pointerEvents: "auto",
         }}>
         ⚙ Admin
       </button>
