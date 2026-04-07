@@ -150,7 +150,8 @@ export default function App() {
   }, [mode]);
 
   // Wait for Firebase Auth to initialise
-  if (authUser === undefined || firebase.loading) return <Spinner />;
+  // Hanya tunggu Auth init, jangan block karena firebase.loading (bisa stuck jika offline)
+  if (authUser === undefined) return <Spinner />;
 
   // ── ADMIN MODE ──
   if (mode === "admin" || mode === "login") {

@@ -19,41 +19,16 @@ export function useFirebase() {
   const [settings, setSettings] = useState(null);
   const [seo,      setSeoState] = useState(null);
   const [loading,  setLoading]  = useState(true);
-  const [seeded,   setSeeded]   = useState(false);
 
-  // ── seed data jika Firestore masih kosong ────────────────────
+  // ── real-time listeners (langsung aktif) ────────────────────
   useEffect(() => {
-    async function seed() {
-      try {
-        const settingsSnap = await getDoc(doc(db, "config", "settings"));
-        if (!settingsSnap.exists()) {
-          // Seed settings & seo
-          await setDoc(doc(db, "config", "settings"), SEED_SETTINGS);
-          await setDoc(doc(db, "config", "seo"),      SEED_SEO);
-          // Seed cars
-          for (const car of SEED_CARS) {
-            await addDoc(collection(db, "cars"), car);
-          }
-          // Seed articles
-          for (const article of SEED_ARTICLES) {
-            await addDoc(collection(db, "articles"), article);
-          }
-        }
-      } catch (err) {
-        console.error("Seed error:", err);
-      } finally {
-        setSeeded(true);
-      }
-    }
-    seed();
-  }, []);
-
-  // ── real-time listeners (aktif setelah seed selesai) ────────
-  useEffect(() => {
-    if (!seeded) return;
-
     let count = 0;
     const done = () => { count++; if (count >= 4) setLoading(false); };
+
+    // Timeout fallback — jika Firestore tidak merespons dalam 10 detik, tetap lanjutkan
+    const timeout = setTimeout(() => {
+      if (loading) setLoading(false);
+    }, 10000);
 
     const unsubCars = onSnapshot(
       query(collection(db, "cars"), orderBy("order", "asc")),
@@ -91,8 +66,37 @@ export function useFirebase() {
       (err) => { console.error("seo:", err); done(); }
     );
 
-    return () => { unsubCars(); unsubArticles(); unsubSettings(); unsubSeo(); };
-  }, [seeded]);
+    return () => {
+      clearTimeout(timeout);
+      unsubCars(); unsubArticles(); unsubSettings(); unsubSeo();
+    };
+  }, []);
+
+  // ── seed data jika Firestore masih kosong (jalankan terpisah, tidak blokir UI) ──
+  useEffect(() => {
+    async function seed() {
+      try {
+        const settingsSnap = await getDoc(doc(db, "config", "settings"));
+        if (!settingsSnap.exists()) {
+          // Seed settings & seo
+          await setDoc(doc(db, "config", "settings"), SEED_SETTINGS);
+          await setDoc(doc(db, "config", "seo"),      SEED_SEO);
+          // Seed cars
+          for (const car of SEED_CARS) {
+            await addDoc(collection(db, "cars"), car);
+          }
+          // Seed articles
+          for (const article of SEED_ARTICLES) {
+            await addDoc(collection(db, "articles"), article);
+          }
+        }
+      } catch (err) {
+        // Seed gagal (offline) — tidak masalah, listeners akan retry otomatis
+        console.warn("Seed skipped (offline or already seeded):", err.message);
+      }
+    }
+    seed();
+  }, []);
 
   // ── CARS CRUD ────────────────────────────────────────────────
   const addCar = async (data) => {
