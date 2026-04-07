@@ -53,7 +53,7 @@ function updateSEO(seo) {
 
 // ── Public Site wrapper ─────────────────────────────────────
 function PublicSite({ firebase, setMode }) {
-  const { cars, articles, settings, seo, incrementView } = firebase;
+  const { cars, articles, settings, seo, loading, incrementView } = firebase;
   const [page,       setPage]       = useState("home");
   const [selArticle, setSelArticle] = useState(null);
 
@@ -70,6 +70,13 @@ function PublicSite({ firebase, setMode }) {
   return (
     <div style={{ background: "#07070f", minHeight: "100vh", fontFamily: "inherit", color: "white" }}>
       <Nav settings={settings} page={page} setPage={v => { setPage(v); window.scrollTo(0, 0); }} />
+
+      {/* Banner jika Firebase masih loading / offline */}
+      {loading && (
+        <div style={{ background: "rgba(201,162,39,0.1)", borderBottom: "1px solid rgba(201,162,39,0.3)", padding: "10px 20px", textAlign: "center", fontSize: 13, color: "#c9a227" }}>
+          ⚡ Menghubungkan ke database... (pastikan Firestore sudah diaktifkan di Firebase Console)
+        </div>
+      )}
 
       {/* HOME */}
       {page === "home" && (
@@ -150,8 +157,8 @@ export default function App() {
     return () => unsub();
   }, [mode]);
 
-  // Wait for Firebase Auth to initialise
-  if (authUser === undefined || firebase.loading) return <Spinner />;
+  // Wait for Firebase Auth to initialise (hanya tunggu auth, bukan data)
+  if (authUser === undefined) return <Spinner />;
 
   // ── ADMIN MODE ──
   if (mode === "admin" || mode === "login") {

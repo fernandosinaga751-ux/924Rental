@@ -53,7 +53,16 @@ export function useFirebase() {
     if (!seeded) return;
 
     let count = 0;
-    const done = () => { count++; if (count >= 4) setLoading(false); };
+    let settled = false;
+    const done = () => {
+      count++;
+      if (count >= 4 && !settled) { settled = true; setLoading(false); }
+    };
+
+    // ⏱ Fallback: jika Firebase offline / lambat, paksa loading selesai setelah 6 detik
+    const timeout = setTimeout(() => {
+      if (!settled) { settled = true; setLoading(false); }
+    }, 6000);
 
     const unsubCars = onSnapshot(
       query(collection(db, "cars"), orderBy("order", "asc")),
@@ -91,7 +100,7 @@ export function useFirebase() {
       (err) => { console.error("seo:", err); done(); }
     );
 
-    return () => { unsubCars(); unsubArticles(); unsubSettings(); unsubSeo(); };
+    return () => { clearTimeout(timeout); unsubCars(); unsubArticles(); unsubSettings(); unsubSeo(); };
   }, [seeded]);
 
   // ── CARS CRUD ────────────────────────────────────────────────
