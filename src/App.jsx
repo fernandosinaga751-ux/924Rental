@@ -53,7 +53,7 @@ function updateSEO(seo) {
 
 // ── Public Site wrapper ─────────────────────────────────────
 function PublicSite({ firebase, setMode }) {
-  const { cars, articles, settings, seo, loading, incrementView } = firebase;
+  const { cars, articles, settings, seo, incrementView } = firebase;
   const [page,       setPage]       = useState("home");
   const [selArticle, setSelArticle] = useState(null);
 
@@ -70,13 +70,6 @@ function PublicSite({ firebase, setMode }) {
   return (
     <div style={{ background: "#07070f", minHeight: "100vh", fontFamily: "inherit", color: "white" }}>
       <Nav settings={settings} page={page} setPage={v => { setPage(v); window.scrollTo(0, 0); }} />
-
-      {/* Banner jika Firebase masih loading / offline */}
-      {loading && (
-        <div style={{ background: "rgba(201,162,39,0.1)", borderBottom: "1px solid rgba(201,162,39,0.3)", padding: "10px 20px", textAlign: "center", fontSize: 13, color: "#c9a227" }}>
-          ⚡ Menghubungkan ke database... (pastikan Firestore sudah diaktifkan di Firebase Console)
-        </div>
-      )}
 
       {/* HOME */}
       {page === "home" && (
@@ -124,13 +117,12 @@ function PublicSite({ firebase, setMode }) {
         onClick={() => setMode("admin")}
         title="Panel Admin"
         style={{
-          position: "fixed", bottom: 80, left: 20, zIndex: 9999,
-          background: "rgba(10,10,22,0.95)", color: "#888",
-          border: "1px solid rgba(255,255,255,0.15)",
+          position: "fixed", bottom: 24, left: 20, zIndex: 998,
+          background: "rgba(10,10,22,0.9)", color: "#444",
+          border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: 8, padding: "7px 14px",
           fontSize: 11, cursor: "pointer", fontWeight: 600,
           backdropFilter: "blur(8px)",
-          pointerEvents: "auto",
         }}>
         ⚙ Admin
       </button>
@@ -157,8 +149,8 @@ export default function App() {
     return () => unsub();
   }, [mode]);
 
-  // Wait for Firebase Auth to initialise (hanya tunggu auth, bukan data)
-  if (authUser === undefined) return <Spinner />;
+  // Wait for Firebase Auth to initialise
+  if (authUser === undefined || firebase.loading) return <Spinner />;
 
   // ── ADMIN MODE ──
   if (mode === "admin" || mode === "login") {
