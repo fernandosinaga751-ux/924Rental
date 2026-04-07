@@ -112,17 +112,18 @@ function PublicSite({ firebase, setMode }) {
         <WAButton wa={settings.wa} waMsg={settings.waMsg || ""} />
       )}
 
-      {/* Admin shortcut button */}
+      {/* Admin shortcut button — selalu bisa diklik */}
       <button
         onClick={() => setMode("admin")}
         title="Panel Admin"
         style={{
-          position: "fixed", bottom: 24, left: 20, zIndex: 998,
-          background: "rgba(10,10,22,0.9)", color: "#444",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 8, padding: "7px 14px",
-          fontSize: 11, cursor: "pointer", fontWeight: 600,
+          position: "fixed", bottom: 24, right: 80, zIndex: 999,
+          background: "rgba(201,162,39,0.15)", color: "#c9a227",
+          border: "1px solid rgba(201,162,39,0.4)",
+          borderRadius: 8, padding: "8px 16px",
+          fontSize: 12, cursor: "pointer", fontWeight: 700,
           backdropFilter: "blur(8px)",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
         }}>
         ⚙ Admin
       </button>
@@ -141,16 +142,21 @@ export default function App() {
 
   // Listen to Firebase Auth state
   useEffect(() => {
+    // Timeout fallback — jika Auth tidak merespons 5 detik, anggap tidak login
+    const timeout = setTimeout(() => {
+      setAuthUser(prev => prev === undefined ? null : prev);
+    }, 5000);
+
     const unsub = onAuthStateChanged(auth, (user) => {
+      clearTimeout(timeout);
       setAuthUser(user || null);
       // If user just logged out while in admin, go back to public
       if (!user && mode === "admin") setMode("public");
     });
-    return () => unsub();
+    return () => { clearTimeout(timeout); unsub(); };
   }, [mode]);
 
-  // Wait for Firebase Auth to initialise
-  // Hanya tunggu Auth init, jangan block karena firebase.loading (bisa stuck jika offline)
+  // Hanya tunggu Auth init — jangan block karena firebase.loading
   if (authUser === undefined) return <Spinner />;
 
   // ── ADMIN MODE ──

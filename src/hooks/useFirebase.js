@@ -23,12 +23,22 @@ export function useFirebase() {
   // ── real-time listeners (langsung aktif) ────────────────────
   useEffect(() => {
     let count = 0;
-    const done = () => { count++; if (count >= 4) setLoading(false); };
+    let done_called = false;
+    const done = () => {
+      count++;
+      if (count >= 4 && !done_called) {
+        done_called = true;
+        setLoading(false);
+      }
+    };
 
-    // Timeout fallback — jika Firestore tidak merespons dalam 10 detik, tetap lanjutkan
+    // Timeout fallback — jika Firestore tidak merespons dalam 8 detik, tetap lanjutkan
     const timeout = setTimeout(() => {
-      if (loading) setLoading(false);
-    }, 10000);
+      if (!done_called) {
+        done_called = true;
+        setLoading(false);
+      }
+    }, 8000);
 
     const unsubCars = onSnapshot(
       query(collection(db, "cars"), orderBy("order", "asc")),
